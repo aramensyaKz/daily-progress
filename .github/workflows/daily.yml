@@ -29,7 +29,8 @@ jobs:
           FILE="log/$MONTH.md"
           [ -f "$FILE" ] || printf '# Log %s\n\n' "$MONTH" > "$FILE"
 
-          N=$(( (RANDOM % 5) + 1 ))
+          # Vary the daily activity from 1 to 15 generated log entries.
+          N=$(( (RANDOM % 15) + 1 ))
           echo "commits today: $N"
 
           MSGS=("update daily log" "chore: sync log" "docs: append entry" \
