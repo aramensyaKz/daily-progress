@@ -1,0 +1,45 @@
+name: daily
+
+on:
+  schedule:
+    - cron: "0 8 * * *"      # 08:00 UTC = 13:00 Asia/Qyzylorda
+  workflow_dispatch:          # ручной запуск из вкладки Actions
+
+permissions:
+  contents: write
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # PAT предпочтительнее: только он сбрасывает 60-дневный таймер
+          # автоотключения крона. Без секрета откатывается на GITHUB_TOKEN.
+          token: ${{ secrets.DAILY_PAT || github.token }}
+
+      - name: Append entries and commit
+        run: |
+          set -e
+          git config user.name  "aramensyaKz"
+          git config user.email "301006689+aramensyaKz@users.noreply.github.com"
+
+          mkdir -p log
+          MONTH=$(date -u +%Y-%m)
+          FILE="log/$MONTH.md"
+          [ -f "$FILE" ] || printf '# Log %s\n\n' "$MONTH" > "$FILE"
+
+          N=$(( (RANDOM % 5) + 1 ))
+          echo "commits today: $N"
+
+          MSGS=("update daily log" "chore: sync log" "docs: append entry" \
+                "chore: housekeeping" "update notes" "chore: daily checkpoint" \
+                "docs: minor update" "chore: tidy up")
+
+          for i in $(seq 1 "$N"); do
+            printf -- '- %s entry %s\n' "$(date -u +%Y-%m-%d)" "$i" >> "$FILE"
+            git add "$FILE"
+            git commit -m "${MSGS[$((RANDOM % ${#MSGS[@]}))]}"
+          done
+
+          git push
